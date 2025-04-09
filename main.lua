@@ -31,8 +31,9 @@ local function start_game()
 	local puzzle = api.get_connections_puzzle()
 	if puzzle == nil then
 		UIManager:show(InfoMessage:new({ text = "failed to get today’s puzzle" }))
+	else
+		UIManager:show(ConnectionsWidget:new({ puzzle = puzzle }))
 	end
-	UIManager:show(ConnectionsWidget:new({ puzzle = puzzle }))
 end
 
 function NYTConnections:addToMainMenu(menu_items)

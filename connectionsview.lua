@@ -93,9 +93,9 @@ function Card:init()
 		alignment = "center",
 		width = inner_width,
 		height = inner_height,
-		--height_adjust = true,
-		height_overflow_show_ellipsis = true,
 		face = Font:getFace("cfont", 20),
+		height_adjust = true,
+		height_overflow_show_ellipsis = true,
 		bold = true,
 		fgcolor = Blitbuffer.COLOR_BLACK,
 		bgcolor = Blitbuffer.COLOR_WHITE,
@@ -114,7 +114,7 @@ function Card:init()
 		CenterContainer:new({
 			dimen = Geom:new({
 				w = inner_width,
-				h = text_size.h,
+				h = inner_height,
 			}),
 			self.text,
 		}),

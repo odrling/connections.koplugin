@@ -346,7 +346,7 @@ function ConnectionsWidget:reveal_category(cat)
 		end
 	end
 
-	local text = category.title .. ": "
+	local text = category.title .. "\n"
 	for i, card in ipairs(category.cards) do
 		text = text .. card.content
 		if i < #category.cards then
@@ -367,7 +367,7 @@ function ConnectionsWidget:reveal_category(cat)
 		alignment = "center",
 		text = text,
 		face = Font:getFace("cfont", 20),
-		bold = false,
+		bold = true,
 		fgcolor = Blitbuffer.COLOR_WHITE,
 		bgcolor = Blitbuffer.COLOR_BLACK,
 	})

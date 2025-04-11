@@ -93,7 +93,7 @@ function Card:init()
 		alignment = "center",
 		width = inner_width,
 		height = inner_height,
-		face = Font:getFace("cfont", 20),
+		face = Font:getFace("cfont", 18),
 		height_adjust = true,
 		height_overflow_show_ellipsis = true,
 		bold = true,

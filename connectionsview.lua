@@ -227,11 +227,17 @@ function ConnectionsWidget:getContent()
 
 	local actions = HorizontalGroup:new({
 		Button:new({
+			text = "Shuffle",
+			margin = Screen:scaleBySize(5),
+			callback = function()
+				self:shuffle()
+			end,
+		}),
+		Button:new({
 			text = "Deselect All",
 			margin = Screen:scaleBySize(5),
 			callback = function()
 				self:deselect_all()
-				self:refresh()
 			end,
 		}),
 		Button:new({
@@ -249,6 +255,18 @@ function ConnectionsWidget:getContent()
 		self.lives_remaining,
 		actions,
 	})
+end
+
+function ConnectionsWidget:shuffle()
+	local start = self:number_revealed() * 4 + 1
+	local i_end = #self.puzzle.cards
+	for i = start, i_end do
+		local other = math.random(start, i_end)
+		local tmp = self.puzzle.cards[i]
+		self.puzzle.cards[i] = self.puzzle.cards[other]
+		self.puzzle.cards[other] = tmp
+	end
+	self:refresh()
 end
 
 function ConnectionsWidget:select_or_remove(word)

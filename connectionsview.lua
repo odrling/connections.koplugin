@@ -360,17 +360,33 @@ function ConnectionsWidget:reveal_category(cat)
 		self.grid[reveal_row][1][i]:free()
 		self.grid[reveal_row][1][i] = nil
 	end
-	self.grid[reveal_row][1][1] = TextBoxWidget:new({
-		width = CARD_WIDTH * 4,
-		height = CARD_HEIGHT,
-		padding = Screen:scaleBySize(2),
-		alignment = "center",
-		text = text,
-		face = Font:getFace("cfont", 20),
-		bold = true,
-		fgcolor = Blitbuffer.COLOR_WHITE,
-		bgcolor = Blitbuffer.COLOR_BLACK,
+	self.grid[reveal_row][1]:free()
+	self.grid[reveal_row][1] = FrameContainer:new({
+		w = ROW_WIDTH,
+		h = CARD_HEIGHT,
+		background = Blitbuffer.COLOR_BLACK,
+		padding = 0,
+		bordersize = 0,
+		CenterContainer:new({
+			dimen = Geom:new({
+				w = ROW_WIDTH,
+				h = CARD_HEIGHT,
+			}),
+			TextBoxWidget:new({
+				width = CARD_WIDTH * 4,
+				height = CARD_HEIGHT,
+				height_adjust = true,
+				padding = Screen:scaleBySize(2),
+				alignment = "center",
+				text = text,
+				face = Font:getFace("cfont", 20),
+				bold = true,
+				fgcolor = Blitbuffer.COLOR_WHITE,
+				bgcolor = Blitbuffer.COLOR_BLACK,
+			}),
+		}),
 	})
+	UIManager:widgetRepaint(self, self.dimen.x, self.dimen.y)
 
 	self:refresh()
 

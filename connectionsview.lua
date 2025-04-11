@@ -15,23 +15,25 @@ local TextWidget = require("ui/widget/textwidget")
 local TitleBar = require("ui/widget/titlebar")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
+local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = require("gettext")
 local logger = require("logger")
 local math = require("math")
 
-local ConnectionsWidget = InputContainer:extend({
+local ConnectionsWidget = WidgetContainer:extend({
 	width = nil,
 	height = nil,
 	color = Blitbuffer.COLOR_BLACK,
 	puzzle = nil,
-	lives = 4,
-	selected = {},
-	revealed = {},
 })
 
 function ConnectionsWidget:init()
 	self.screen_width = Screen:getWidth()
 	self.screen_height = Screen:getHeight()
+
+	self.lives = 4
+	self.selected = {}
+	self.revealed = {}
 
 	self.covers_fullscreen = true
 

@@ -1,13 +1,16 @@
 local Blitbuffer = require("ffi/blitbuffer")
 local Button = require("ui/widget/button")
+local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
 local Font = require("ui/font")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
+local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local InfoMessage = require("ui/widget/InfoMessage")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Screen = Device.screen
+local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
 local TitleBar = require("ui/widget/titlebar")
 local UIManager = require("ui/uimanager")
@@ -23,6 +26,7 @@ local ConnectionsWidget = InputContainer:extend({
 	puzzle = nil,
 	lives = 4,
 	selected = {},
+	revealed = {},
 })
 
 function ConnectionsWidget:init()
@@ -47,6 +51,108 @@ function ConnectionsWidget:init()
 	end)
 end
 
+local ROW_WIDTH = Screen:getWidth() - Screen:scaleBySize(40)
+local CARD_WIDTH = math.floor(ROW_WIDTH / 4)
+local CARD_HEIGHT = Screen:scaleBySize(64)
+
+local Card = InputContainer:extend({
+	connections = nil,
+	card_number = 0,
+	width = nil,
+})
+
+function Card:card()
+	return self.connections.puzzle.cards[self.card_number]
+end
+
+function Card:selected()
+	return self.connections.selected
+end
+
+function Card:refresh()
+	self.text:setText(self:card())
+	self:setStyle()
+end
+
+function Card:init()
+	local bordersize = Screen:scaleBySize(1)
+	local padding = Screen:scaleBySize(2)
+
+	local frame_width = self.width
+	local frame_height = self.height
+
+	-- for some reason TextBoxWidget renders above the border of the FrameContainer
+	-- so there is some additional adjustments to make it look better.
+	local inner_width = frame_width - (padding * 2) - Screen:scaleBySize(1)
+	local inner_height = frame_height - (padding * 2) - Screen:scaleBySize(3)
+
+	self.text = TextBoxWidget:new({
+		text = self:card(),
+		alignment = "center",
+		width = inner_width,
+		height = inner_height,
+		--height_adjust = true,
+		height_overflow_show_ellipsis = true,
+		face = Font:getFace("cfont", 20),
+		bold = true,
+		fgcolor = Blitbuffer.COLOR_BLACK,
+		bgcolor = Blitbuffer.COLOR_WHITE,
+	})
+
+	local text_size = self.text:getSize()
+
+	self.frame = FrameContainer:new({
+		background = Blitbuffer.COLOR_WHITE,
+		border = bordersize,
+		width = frame_width,
+		height = frame_height,
+		padding = padding,
+		margin = 0,
+		dimen = Geom:new({ w = self.width, h = self.height }),
+		CenterContainer:new({
+			dimen = Geom:new({
+				w = inner_width,
+				h = text_size.h,
+			}),
+			self.text,
+		}),
+	})
+	self.dimen = self.frame:getSize()
+
+	self[1] = self.frame
+
+	self.ges_events = {
+		TapSelectCard = {
+			GestureRange:new({
+				ges = "tap",
+				range = self.dimen,
+			}),
+		},
+	}
+end
+
+function Card:setStyle()
+	if self.connections:is_selected(self:card()) > 0 then
+		self.frame.background = Blitbuffer.COLOR_BLACK
+		self.text.bgcolor = Blitbuffer.COLOR_BLACK
+		self.text.fgcolor = Blitbuffer.COLOR_WHITE
+	else
+		self.frame.background = Blitbuffer.COLOR_WHITE
+		self.text.bgcolor = Blitbuffer.COLOR_WHITE
+		self.text.fgcolor = Blitbuffer.COLOR_BLACK
+	end
+	self.text:init()
+	UIManager:widgetRepaint(self, self.dimen.x, self.dimen.y)
+	UIManager:setDirty(self, function()
+		return "fast", self.dimen
+	end)
+end
+
+function Card:onTapSelectCard()
+	self.connections:select_or_remove(self:card())
+	self:setStyle()
+end
+
 function ConnectionsWidget:getContent()
 	local titlebar = TitleBar:new({
 		title = "Connections",
@@ -58,33 +164,56 @@ function ConnectionsWidget:getContent()
 	})
 
 	self.grid = VerticalGroup:new({
-		HorizontalGroup:new({}),
-		HorizontalGroup:new({}),
-		HorizontalGroup:new({}),
-		HorizontalGroup:new({}),
+		FrameContainer:new({
+			bordersize = 0,
+			padding = Screen:scaleBySize(2),
+			margin = 0,
+			height = CARD_HEIGHT,
+			HorizontalGroup:new({
+				height = CARD_HEIGHT,
+			}),
+		}),
+		FrameContainer:new({
+			bordersize = 0,
+			padding = Screen:scaleBySize(2),
+			margin = 0,
+			height = CARD_HEIGHT,
+			HorizontalGroup:new({
+				height = CARD_HEIGHT,
+			}),
+		}),
+		FrameContainer:new({
+			bordersize = 0,
+			padding = Screen:scaleBySize(2),
+			margin = 0,
+			height = CARD_HEIGHT,
+			HorizontalGroup:new({
+				height = CARD_HEIGHT,
+			}),
+		}),
+		FrameContainer:new({
+			bordersize = 0,
+			padding = Screen:scaleBySize(2),
+			margin = 0,
+			height = CARD_HEIGHT,
+			HorizontalGroup:new({
+				height = CARD_HEIGHT,
+			}),
+		}),
 	})
 
-	local button_size = math.floor(self.screen_width / 4) - Screen:scaleBySize(10)
-	for i, card in ipairs(self.puzzle.cards) do
+	for i, _ in ipairs(self.puzzle.cards) do
 		local row = math.floor((i - 1) / 4) + 1
 		local col = ((i - 1) % 4) + 1
 
-		local button = Button:new({
-			text_func = function()
-				return self.puzzle.cards[i]
-			end,
-			width = button_size,
-			checked_func = function()
-				return self:is_selected(card) ~= 0
-			end,
-			background = Blitbuffer.COLOR_WHITE,
-			margin = Screen:scaleBySize(5),
-			border = Screen:scaleBySize(1),
-			callback = function()
-				self:select_or_remove(self.puzzle.cards[i])
-			end,
+		local button = Card:new({
+			connections = self,
+			card_number = i,
+			margin = 5,
+			width = CARD_WIDTH,
+			height = CARD_HEIGHT,
 		})
-		self.grid[row][col] = button
+		self.grid[row][1][col] = button
 	end
 
 	self.lives_remaining = TextWidget:new({
@@ -122,13 +251,15 @@ end
 
 function ConnectionsWidget:select_or_remove(word)
 	if word == "" then
-		return nil
+		return
 	end
 
 	local n = self:is_selected(word)
 	if n == 0 and #self.selected < 4 then
+		logger.info("connection: selecting " .. word)
 		self.selected[#self.selected + 1] = word
 	else
+		logger.info("connection: deselecting " .. word)
 		table.remove(self.selected, n)
 	end
 end
@@ -146,6 +277,7 @@ function ConnectionsWidget:deselect_all()
 	for i, _ in ipairs(self.selected) do
 		self.selected[i] = nil
 	end
+	self:refresh()
 end
 
 function ConnectionsWidget:get_category(word)
@@ -161,18 +293,84 @@ function ConnectionsWidget:get_category(word)
 	return nil
 end
 
+function ConnectionsWidget:reveal_answers()
+	for i, _ in ipairs(self.puzzle.categories) do
+		if self.revealed[i] == nil then
+			self:reveal_category(i)
+		end
+	end
+end
+
+function ConnectionsWidget:number_revealed()
+	local n = 0
+	for i = 1, 4 do
+		if self.revealed[i] ~= nil then
+			n = n + 1
+		end
+	end
+
+	return n
+end
+
 function ConnectionsWidget:reveal_category(cat)
+	local category = self.puzzle.categories[cat]
+	local src = 4 * self:number_revealed()
+
 	for i, v in ipairs(self.puzzle.cards) do
-		for _, selword in ipairs(self.selected) do
-			if v == selword then
-				self.puzzle.cards[i] = ""
+		for _, card in ipairs(category.cards) do
+			if v == card.content then
+				src = src + 1
+				self.puzzle.cards[i] = self.puzzle.cards[src]
+				self.puzzle.cards[src] = ""
 			end
 		end
 	end
-	self:deselect_all()
 
-	-- do something better to show the category name
-	UIManager:show(InfoMessage:new({ text = "Correct: " .. self.puzzle.categories[cat].title }))
+	local text = category.title .. ": "
+	for i, card in ipairs(category.cards) do
+		text = text .. card.content
+		if i < #category.cards then
+			text = text .. ", "
+		end
+	end
+
+	self.revealed[cat] = true
+	local reveal_row = self:number_revealed()
+	for i = 1, 4 do
+		self.grid[reveal_row][1][i]:free()
+		self.grid[reveal_row][1][i] = nil
+	end
+	self.grid[reveal_row][1][1] = TextBoxWidget:new({
+		width = CARD_WIDTH * 4,
+		height = CARD_HEIGHT,
+		padding = Screen:scaleBySize(2),
+		alignment = "center",
+		text = text,
+		face = Font:getFace("cfont", 20),
+		bold = false,
+		fgcolor = Blitbuffer.COLOR_WHITE,
+		bgcolor = Blitbuffer.COLOR_BLACK,
+	})
+
+	self:refresh()
+
+	if reveal_row == 4 then
+		self:show_end_message()
+	end
+end
+
+function ConnectionsWidget:show_end_message()
+	if self.lives == 4 then
+		UIManager:show(InfoMessage:new({ text = "Perfect" }))
+	elseif self.lives == 3 then
+		UIManager:show(InfoMessage:new({ text = "Great" }))
+	elseif self.lives == 2 then
+		UIManager:show(InfoMessage:new({ text = "Solid" }))
+	elseif self.lives == 1 then
+		UIManager:show(InfoMessage:new({ text = "Phew" }))
+	else
+		UIManager:show(InfoMessage:new({ text = "Next Time" }))
+	end
 end
 
 function ConnectionsWidget:check_selected()
@@ -195,19 +393,19 @@ function ConnectionsWidget:check_selected()
 
 	if max_words == 4 then
 		self:reveal_category(max_cat)
+		self:deselect_all()
 	else
 		self.lives = self.lives - 1
 		self:set_lives_string()
 
 		if self.lives == 0 then
-			UIManager:show(InfoMessage:new({ text = "Maybe next time." }))
-		elseif word_categories[4] == 3 then
-			UIManager:show(InfoMessage:new({ text = "One away." }))
+			self:reveal_answers()
+		elseif max_words == 3 then
+			UIManager:show(InfoMessage:new({ text = "One Away" }))
 		else
-			UIManager:show(InfoMessage:new({ text = "Wrong." }))
+			UIManager:show(InfoMessage:new({ text = "Wrong" }))
 		end
 	end
-	self:refresh()
 end
 
 function ConnectionsWidget:refresh()
@@ -215,17 +413,22 @@ function ConnectionsWidget:refresh()
 	for i = 1, 4 do
 		for u = 1, 4 do
 			-- text_func is used and it’s only called in init
-			self.grid[i][u]:init()
+			if #self.grid[i][1] == 4 then
+				self.grid[i][1][u]:refresh()
+			end
 		end
 	end
-	UIManager:widgetRepaint(self, 0, 0)
-	UIManager:setDirty(self.lives_remaining, function()
-		return "fast", self.lives_remaining.dimen
+
+	UIManager:setDirty(self, function()
+		return "fast", self.dimen
 	end)
 end
 
 function ConnectionsWidget:set_lives_string()
 	self.lives_remaining:setText(self:get_lives_string())
+	UIManager:setDirty(self, function()
+		return "fast", self.dimen
+	end)
 end
 
 function ConnectionsWidget:get_lives_string()

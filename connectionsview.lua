@@ -161,21 +161,13 @@ function Card:onTapSelectCard()
 	self:setStyle()
 end
 
-function ConnectionsWidget:info_callback()
-	UIManager:show(InfoMessage:new({
-		text = "Date: " .. self.puzzle.print_date .. "\nEditor: " .. self.puzzle.editor,
-	}))
-end
-
 function ConnectionsWidget:getContent()
 	local titlebar = TitleBar:new({
-		left_icon = "info",
-		left_icon_tap_callback = function()
-			self:info_callback()
-		end,
+		subtitle = self.puzzle.print_date .. " • " .. self.puzzle.editor,
 		fullscreen = true,
 		title = "Connections",
 		width = self.screen_width,
+		with_bottom_line = true,
 		padding = Screen:scaleBySize(5),
 		close_callback = not self.readonly and function()
 			self:onClose()

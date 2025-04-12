@@ -48,9 +48,7 @@ function ConnectionsWidget:init()
 
 	self.dimen = Geom:new({ w = self.screen_width, h = self.screen_height, x = 0, y = 0 })
 
-	UIManager:setDirty(self, function()
-		return "ui", self.dimen
-	end)
+	UIManager:setDirty(self, "ui", self.dimen)
 end
 
 local ROW_WIDTH = Screen:getWidth() - Screen:scaleBySize(40)
@@ -151,9 +149,7 @@ function Card:setStyle()
 	end
 	self.text:init()
 	UIManager:widgetRepaint(self, self.dimen.x, self.dimen.y)
-	UIManager:setDirty(self, function()
-		return "fast", self.dimen
-	end)
+	UIManager:setDirty(nil, "fast", self.dimen)
 end
 
 function Card:onTapSelectCard()
@@ -234,6 +230,23 @@ function ConnectionsWidget:getContent()
 	})
 	self:set_lives_string()
 
+	self.deselect_all_button = Button:new({
+		text = "Deselect All",
+		enabled = false,
+		margin = Screen:scaleBySize(5),
+		callback = function()
+			self:deselect_all()
+		end,
+	})
+	self.submit_button = Button:new({
+		text = "Submit",
+		enabled = false,
+		margin = Screen:scaleBySize(5),
+		callback = function()
+			self:check_selected()
+		end,
+	})
+
 	local actions = HorizontalGroup:new({
 		Button:new({
 			text = "Shuffle",
@@ -242,20 +255,8 @@ function ConnectionsWidget:getContent()
 				self:shuffle()
 			end,
 		}),
-		Button:new({
-			text = "Deselect All",
-			margin = Screen:scaleBySize(5),
-			callback = function()
-				self:deselect_all()
-			end,
-		}),
-		Button:new({
-			text = "Submit",
-			margin = Screen:scaleBySize(5),
-			callback = function()
-				self:check_selected()
-			end,
-		}),
+		self.deselect_all_button,
+		self.submit_button,
 	})
 
 	return VerticalGroup:new({
@@ -278,6 +279,21 @@ function ConnectionsWidget:shuffle()
 	self:refresh()
 end
 
+function ConnectionsWidget:update_buttons()
+	if #self.selected > 0 then
+		self.deselect_all_button:enable()
+	else
+		self.deselect_all_button:disable()
+	end
+	if #self.selected == 4 then
+		self.submit_button:enable()
+	else
+		self.submit_button:disable()
+	end
+	UIManager:setDirty(self, "ui", self.submit_button.dimen)
+	UIManager:setDirty(self, "ui", self.deselect_all_button.dimen)
+end
+
 function ConnectionsWidget:select_or_remove(word)
 	if word == "" then
 		return
@@ -286,8 +302,14 @@ function ConnectionsWidget:select_or_remove(word)
 	local n = self:is_selected(word)
 	if n == 0 and #self.selected < 4 then
 		self.selected[#self.selected + 1] = word
+		if #self.selected == 1 or #self.selected == 4 then
+			self:update_buttons()
+		end
 	else
 		table.remove(self.selected, n)
+		if #self.selected == 3 or #self.selected == 0 then
+			self:update_buttons()
+		end
 	end
 end
 
@@ -304,6 +326,7 @@ function ConnectionsWidget:deselect_all()
 	for i, _ in ipairs(self.selected) do
 		self.selected[i] = nil
 	end
+	self:update_buttons()
 	self:refresh()
 end
 
@@ -368,7 +391,7 @@ function ConnectionsWidget:reveal_category(cat)
 		self.grid[reveal_row][1][i] = nil
 	end
 	self.grid[reveal_row][1]:free()
-	self.grid[reveal_row][1] = FrameContainer:new({
+	local category_container = FrameContainer:new({
 		w = ROW_WIDTH,
 		h = CARD_HEIGHT,
 		background = Blitbuffer.COLOR_BLACK,
@@ -393,8 +416,9 @@ function ConnectionsWidget:reveal_category(cat)
 			}),
 		}),
 	})
-	UIManager:widgetRepaint(self, self.dimen.x, self.dimen.y)
+	self.grid[reveal_row][1] = category_container
 
+	UIManager:setDirty(nil, "ui", self.grid.dimen)
 	self:refresh()
 
 	if reveal_row == 4 then
@@ -462,16 +486,12 @@ function ConnectionsWidget:refresh()
 		end
 	end
 
-	UIManager:setDirty(self, function()
-		return "fast", self.dimen
-	end)
+	UIManager:setDirty(self, "fast", self.dimen)
 end
 
 function ConnectionsWidget:set_lives_string()
 	self.lives_remaining:setText(self:get_lives_string())
-	UIManager:setDirty(self, function()
-		return "fast", self.dimen
-	end)
+	UIManager:setDirty(self, "fast", self.dimen)
 end
 
 function ConnectionsWidget:get_lives_string()

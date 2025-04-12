@@ -70,8 +70,16 @@ function Card:selected()
 end
 
 function Card:refresh()
-	self.text:setText(self:card())
-	self:setStyle()
+	local text_changed = false
+	if self.text.text ~= self:card() then
+		self.text:setText(self:card())
+		text_changed = true
+		UIManager:setDirty(nil, "ui", self.dimen)
+	end
+	local style_changed = self:setStyle()
+	if text_changed or style_changed then
+		self:repaint()
+	end
 end
 
 function Card:init()
@@ -137,24 +145,37 @@ function Card:init()
 	}
 end
 
+-- returns when style changed
 function Card:setStyle()
 	if self.connections:is_selected(self:card()) > 0 then
+		if self.frame.background == Blitbuffer.COLOR_BLACK then
+			return false
+		end
 		self.frame.background = Blitbuffer.COLOR_BLACK
 		self.text.bgcolor = Blitbuffer.COLOR_BLACK
 		self.text.fgcolor = Blitbuffer.COLOR_WHITE
 	else
+		if self.frame.background == Blitbuffer.COLOR_WHITE then
+			return false
+		end
 		self.frame.background = Blitbuffer.COLOR_WHITE
 		self.text.bgcolor = Blitbuffer.COLOR_WHITE
 		self.text.fgcolor = Blitbuffer.COLOR_BLACK
 	end
 	self.text:init()
+	return true
+end
+
+function Card:repaint()
 	UIManager:widgetRepaint(self, self.dimen.x, self.dimen.y)
 	UIManager:setDirty(nil, "fast", self.dimen)
 end
 
 function Card:onTapSelectCard()
 	self.connections:select_or_remove(self:card())
-	self:setStyle()
+	if self:setStyle() then
+		self:repaint()
+	end
 end
 
 function ConnectionsWidget:getContent()
@@ -485,13 +506,11 @@ function ConnectionsWidget:refresh()
 			end
 		end
 	end
-
-	UIManager:setDirty(self, "fast", self.dimen)
 end
 
 function ConnectionsWidget:set_lives_string()
 	self.lives_remaining:setText(self:get_lives_string())
-	UIManager:setDirty(self, "fast", self.dimen)
+	UIManager:setDirty(self, "ui", self.dimen)
 end
 
 function ConnectionsWidget:get_lives_string()

@@ -37,6 +37,8 @@ local function get_connections_puzzle()
 	return {
 		categories = categories,
 		cards = cards,
+		editor = resp.editor,
+		print_date = resp.print_date,
 	}
 end
 

@@ -79,14 +79,13 @@ end
 function Card:init()
 	local bordersize = Screen:scaleBySize(1)
 	local padding = Screen:scaleBySize(2)
+	local margin = Screen:scaleBySize(2)
 
-	local frame_width = self.width
-	local frame_height = self.height
+	local frame_width = self.width - (bordersize + margin) * 2
+	local frame_height = self.height - (bordersize + margin) * 2
 
-	-- for some reason TextBoxWidget renders above the border of the FrameContainer
-	-- so there is some additional adjustments to make it look better.
-	local inner_width = frame_width - (padding * 2) - Screen:scaleBySize(1)
-	local inner_height = frame_height - (padding * 2) - Screen:scaleBySize(3)
+	local inner_width = frame_width - (padding * 2)
+	local inner_height = frame_height - (padding * 2)
 
 	self.text = TextBoxWidget:new({
 		text = self:card(),
@@ -101,16 +100,17 @@ function Card:init()
 		bgcolor = Blitbuffer.COLOR_WHITE,
 	})
 
-	local text_size = self.text:getSize()
-
 	self.frame = FrameContainer:new({
 		background = Blitbuffer.COLOR_WHITE,
-		border = bordersize,
+		bordersize = bordersize,
 		width = frame_width,
 		height = frame_height,
 		padding = padding,
 		margin = 0,
-		dimen = Geom:new({ w = self.width, h = self.height }),
+		dimen = Geom:new({
+			w = frame_width,
+			h = frame_height,
+		}),
 		CenterContainer:new({
 			dimen = Geom:new({
 				w = inner_width,
@@ -119,9 +119,15 @@ function Card:init()
 			self.text,
 		}),
 	})
-	self.dimen = self.frame:getSize()
+	self.dimen = Geom:new({ w = self.width, h = self.height })
 
-	self[1] = self.frame
+	self[1] = CenterContainer:new({
+		dimen = Geom:new({
+			w = self.width,
+			h = self.height,
+		}),
+		self.frame,
+	})
 
 	self.ges_events = {
 		TapSelectCard = {
@@ -276,10 +282,8 @@ function ConnectionsWidget:select_or_remove(word)
 
 	local n = self:is_selected(word)
 	if n == 0 and #self.selected < 4 then
-		logger.info("connection: selecting " .. word)
 		self.selected[#self.selected + 1] = word
 	else
-		logger.info("connection: deselecting " .. word)
 		table.remove(self.selected, n)
 	end
 end

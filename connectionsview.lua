@@ -251,6 +251,14 @@ function ConnectionsWidget:getContent()
 	})
 	self:set_lives_string()
 
+	self.shuffle_button = Button:new({
+		text = "Shuffle",
+		margin = Screen:scaleBySize(5),
+		callback = function()
+			self:shuffle()
+		end,
+	})
+
 	self.deselect_all_button = Button:new({
 		text = "Deselect All",
 		enabled = false,
@@ -259,6 +267,7 @@ function ConnectionsWidget:getContent()
 			self:deselect_all()
 		end,
 	})
+
 	self.submit_button = Button:new({
 		text = "Submit",
 		enabled = false,
@@ -269,13 +278,7 @@ function ConnectionsWidget:getContent()
 	})
 
 	local actions = HorizontalGroup:new({
-		Button:new({
-			text = "Shuffle",
-			margin = Screen:scaleBySize(5),
-			callback = function()
-				self:shuffle()
-			end,
-		}),
+		self.shuffle_button,
 		self.deselect_all_button,
 		self.submit_button,
 	})
@@ -448,6 +451,8 @@ function ConnectionsWidget:reveal_category(cat)
 end
 
 function ConnectionsWidget:show_end_message()
+	self.shuffle_button:disable()
+	UIManager:setDirty(self, "ui", self.dimen)
 	if self.lives == 4 then
 		UIManager:show(InfoMessage:new({ text = "Perfect" }))
 	elseif self.lives == 3 then

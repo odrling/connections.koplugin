@@ -24,16 +24,15 @@ function NYTConnections:init()
 end
 
 local function start_game()
-	if NetworkMgr:willRerunWhenConnected(start_game) then
-		return
-	end
-
-	local puzzle = api.get_connections_puzzle()
-	if puzzle == nil then
-		UIManager:show(InfoMessage:new({ text = "failed to get today’s puzzle" }))
-	else
-		UIManager:show(ConnectionsWidget:new({ puzzle = puzzle }))
-	end
+	NetworkMgr:runWhenOnline(function()
+		local puzzle = api.get_connections_puzzle()
+		NetworkMgr:afterWifiAction()
+		if puzzle == nil then
+			UIManager:show(InfoMessage:new({ text = "failed to get today’s puzzle" }))
+		else
+			UIManager:show(ConnectionsWidget:new({ puzzle = puzzle }))
+		end
+	end)
 end
 
 function NYTConnections:addToMainMenu(menu_items)

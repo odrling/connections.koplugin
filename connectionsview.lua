@@ -306,16 +306,18 @@ end
 function ConnectionsWidget:update_buttons()
 	if #self.selected > 0 then
 		self.deselect_all_button:enable()
+		UIManager:setDirty(self, "fast", self.deselect_all_button.dimen)
 	else
 		self.deselect_all_button:disable()
+		UIManager:setDirty(self, "ui", self.deselect_all_button.dimen)
 	end
 	if #self.selected == 4 then
 		self.submit_button:enable()
+		UIManager:setDirty(self, "fast", self.submit_button.dimen)
 	else
 		self.submit_button:disable()
+		UIManager:setDirty(self, "ui", self.submit_button.dimen)
 	end
-	UIManager:setDirty(self, "ui", self.submit_button.dimen)
-	UIManager:setDirty(self, "ui", self.deselect_all_button.dimen)
 end
 
 function ConnectionsWidget:select_or_remove(word)

@@ -402,7 +402,7 @@ function ConnectionsWidget:reveal_category(cat)
 		end
 	end
 
-	local text = category.title .. "\n"
+	local text = cat .. ". " .. category.title .. "\n"
 	for i, card in ipairs(category.cards) do
 		text = text .. card.content
 		if i < #category.cards then

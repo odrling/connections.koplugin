@@ -28,6 +28,20 @@ local ConnectionsWidget = WidgetContainer:extend({
 })
 
 function ConnectionsWidget:init()
+	self.original_rotation_mode = Screen:getRotationMode()
+	if Screen:getScreenWidth() < Screen:getScreenHeight() then
+		if
+			self.original_rotation_mode == Screen.DEVICE_ROTATED_UPRIGHT
+			or self.original_rotation_mode == Screen.DEVICE_ROTATED_UPSIDE_DOWN
+		then
+			Screen:setRotationMode(Screen.DEVICE_ROTATED_CLOCKWISE)
+		end
+	elseif
+		self.original_rotation_mode == Screen.DEVICE_ROTATED_CLOCKWISE
+		or self.original_rotation_mode == Screen.DEVICE_ROTATED_COUNTER_CLOCKWISE
+	then
+		Screen:setRotationMode(Screen.DEVICE_ROTATED_UPRIGHT)
+	end
 	self.screen_width = Screen:getWidth()
 	self.screen_height = Screen:getHeight()
 
@@ -51,8 +65,14 @@ function ConnectionsWidget:init()
 	UIManager:setDirty(self, "ui", self.dimen)
 end
 
-local ROW_WIDTH = Screen:getWidth() - Screen:scaleBySize(40)
-local CARD_WIDTH = math.floor(ROW_WIDTH / 4)
+local function getRowWidth()
+	return Screen:getWidth() - Screen:scaleBySize(40)
+end
+
+local function getCardWidth()
+	return math.floor(getRowWidth() / 4)
+end
+
 local CARD_HEIGHT = Screen:scaleBySize(64)
 
 local Card = InputContainer:extend({
@@ -238,7 +258,7 @@ function ConnectionsWidget:getContent()
 			connections = self,
 			card_number = i,
 			margin = 5,
-			width = CARD_WIDTH,
+			width = getCardWidth(),
 			height = CARD_HEIGHT,
 		})
 		self.grid[row][1][col] = button
@@ -418,18 +438,18 @@ function ConnectionsWidget:reveal_category(cat)
 	end
 	self.grid[reveal_row][1]:free()
 	local category_container = FrameContainer:new({
-		w = ROW_WIDTH,
+		w = getRowWidth(),
 		h = CARD_HEIGHT,
 		background = Blitbuffer.COLOR_BLACK,
 		padding = 0,
 		bordersize = 0,
 		CenterContainer:new({
 			dimen = Geom:new({
-				w = ROW_WIDTH,
+				w = getRowWidth(),
 				h = CARD_HEIGHT,
 			}),
 			TextBoxWidget:new({
-				width = CARD_WIDTH * 4,
+				width = getCardWidth() * 4,
 				height = CARD_HEIGHT,
 				height_adjust = true,
 				padding = Screen:scaleBySize(2),
@@ -525,6 +545,7 @@ function ConnectionsWidget:get_lives_string()
 end
 
 function ConnectionsWidget:onClose()
+	Screen:setRotationMode(self.original_rotation_mode)
 	UIManager:close(self)
 	return true
 end

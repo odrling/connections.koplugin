@@ -7,8 +7,8 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
-local InfoMessage = require("ui/widget/InfoMessage")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local Notification = require("ui/widget/notification")
 local Screen = Device.screen
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
@@ -476,25 +476,32 @@ function ConnectionsWidget:reveal_category(cat)
 	end
 end
 
+local function notify(msg)
+	UIManager:show(Notification:new({
+		text = msg,
+		timeout = 10,
+	}))
+end
+
 function ConnectionsWidget:show_end_message()
 	self.shuffle_button:disable()
 	UIManager:setDirty(self, "ui", self.dimen)
 	if self.lives == 4 then
-		UIManager:show(InfoMessage:new({ text = "Perfect" }))
+		UIManager:show(notify("Perfect"))
 	elseif self.lives == 3 then
-		UIManager:show(InfoMessage:new({ text = "Great" }))
+		UIManager:show(notify("Great"))
 	elseif self.lives == 2 then
-		UIManager:show(InfoMessage:new({ text = "Solid" }))
+		UIManager:show(notify("Solid"))
 	elseif self.lives == 1 then
-		UIManager:show(InfoMessage:new({ text = "Phew" }))
+		UIManager:show(notify("Phew"))
 	else
-		UIManager:show(InfoMessage:new({ text = "Next Time" }))
+		UIManager:show(notify("Next Time"))
 	end
 end
 
 function ConnectionsWidget:check_selected()
 	if #self.selected < 4 then
-		UIManager:show(InfoMessage:new({ text = "Select 4 cards first" }))
+		UIManager:show(notify("Select 4 cards first"))
 		return nil
 	end
 
@@ -520,9 +527,9 @@ function ConnectionsWidget:check_selected()
 		if self.lives == 0 then
 			self:reveal_answers()
 		elseif max_words == 3 then
-			UIManager:show(InfoMessage:new({ text = "One Away" }))
+			UIManager:show(notify("One Away"))
 		else
-			UIManager:show(InfoMessage:new({ text = "Wrong" }))
+			UIManager:show(notify("Wrong"))
 		end
 	end
 end

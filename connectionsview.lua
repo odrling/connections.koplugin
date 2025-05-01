@@ -443,6 +443,10 @@ function ConnectionsWidget:reveal_category(cat)
 		background = Blitbuffer.COLOR_BLACK,
 		padding = 0,
 		bordersize = 0,
+		dimen = Geom:new({
+			w = getRowWidth(),
+			h = CARD_HEIGHT,
+		}),
 		CenterContainer:new({
 			dimen = Geom:new({
 				w = getRowWidth(),
@@ -464,8 +468,8 @@ function ConnectionsWidget:reveal_category(cat)
 	})
 	self.grid[reveal_row][1] = category_container
 
-	UIManager:setDirty(nil, "ui", self.grid.dimen)
 	self:refresh()
+	UIManager:setDirty(nil, "ui", self.grid[reveal_row][1].dimen)
 
 	if reveal_row == 4 then
 		self:show_end_message()

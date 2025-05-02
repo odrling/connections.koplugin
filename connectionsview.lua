@@ -395,6 +395,7 @@ function ConnectionsWidget:reveal_answers()
 			self:reveal_category(i)
 		end
 	end
+	self:deselect_all()
 end
 
 function ConnectionsWidget:number_revealed()

@@ -6,7 +6,7 @@ This plugin lets you play Connections in KOReader.
 --
 
 local ConnectionsWidget = require("connectionsview")
-local InfoMessage = require("ui/widget/InfoMessage")
+local InfoMessage = require("ui/widget/infomessage")
 local NetworkMgr = require("ui/network/manager")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")

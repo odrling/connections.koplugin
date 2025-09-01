@@ -42,14 +42,29 @@ function ConnectionsWidget:init()
 	then
 		Screen:setRotationMode(Screen.DEVICE_ROTATED_UPRIGHT)
 	end
-	self.screen_width = Screen:getWidth()
-	self.screen_height = Screen:getHeight()
 
 	self.lives = 4
 	self.selected = {}
 	self.revealed = {}
 
 	self.covers_fullscreen = true
+
+	self:recalculate()
+end
+
+function ConnectionsWidget:onSetDimensions(dimensions)
+	self.dimen = dimensions
+	self:recalculate()
+end
+
+function ConnectionsWidget:onRestoreDimensions(dimensions)
+	self.dimen = dimensions
+	self:recalculate()
+end
+
+function ConnectionsWidget:recalculate()
+	self.screen_width = Screen:getWidth()
+	self.screen_height = Screen:getHeight()
 
 	self[1] = FrameContainer:new({
 		width = self.screen_width,

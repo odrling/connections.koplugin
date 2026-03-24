@@ -17,6 +17,7 @@ local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = require("gettext")
+local api = require("connectionsapi")
 local logger = require("logger")
 local math = require("math")
 
@@ -25,6 +26,8 @@ local ConnectionsWidget = WidgetContainer:extend({
 	height = nil,
 	color = Blitbuffer.COLOR_BLACK,
 	puzzle = nil,
+	puzzle_date = nil,
+	on_next_puzzle = nil,
 })
 
 function ConnectionsWidget:init()
@@ -312,10 +315,23 @@ function ConnectionsWidget:getContent()
 		end,
 	})
 
+	self.next_puzzle_button = Button:new({
+		text = "Next Puzzle",
+		enabled = false,
+		margin = Screen:scaleBySize(5),
+		callback = function()
+			if self.on_next_puzzle then
+				self:onClose()
+				self.on_next_puzzle()
+			end
+		end,
+	})
+
 	local actions = HorizontalGroup:new({
 		self.shuffle_button,
 		self.deselect_all_button,
 		self.submit_button,
+		self.next_puzzle_button,
 	})
 
 	return VerticalGroup:new({
@@ -500,19 +516,26 @@ local function notify(msg)
 end
 
 function ConnectionsWidget:show_end_message()
-	self.shuffle_button:disable()
-	UIManager:setDirty(self, "ui", self.dimen)
-	if self.lives == 4 then
-		UIManager:show(notify("Perfect"))
-	elseif self.lives == 3 then
-		UIManager:show(notify("Great"))
-	elseif self.lives == 2 then
-		UIManager:show(notify("Solid"))
-	elseif self.lives == 1 then
-		UIManager:show(notify("Phew"))
-	else
-		UIManager:show(notify("Next Time"))
+	if self.puzzle_date then
+		api.mark_played(self.puzzle_date)
 	end
+	self.shuffle_button:disable()
+	self.submit_button:disable()
+	self.deselect_all_button:disable()
+	if self.on_next_puzzle then
+		self.next_puzzle_button:enable()
+		UIManager:setDirty(self, "fast", self.next_puzzle_button.dimen)
+	end
+	UIManager:setDirty(self, "ui", self.dimen)
+
+	local msg
+	if self.lives == 4 then msg = "Perfect!"
+	elseif self.lives == 3 then msg = "Great!"
+	elseif self.lives == 2 then msg = "Solid!"
+	elseif self.lives == 1 then msg = "Phew!"
+	else msg = "Next Time!" end
+
+	UIManager:show(Notification:new({ text = msg, timeout = 5 }))
 end
 
 function ConnectionsWidget:check_selected()

@@ -6,8 +6,6 @@ local datetime = require("datetime")
 local DataStorage = require("datastorage")
 local lfs = require("libs/libkoreader-lfs")
 
-local MAX_ARCHIVE = 100
-
 local function get_archive_dir()
 	local dir = DataStorage:getDataDir() .. "/connections"
 	lfs.mkdir(dir)
@@ -87,18 +85,6 @@ local function delete_puzzle(date)
 	save_state(state)
 end
 
-local function enforce_max_archive()
-	local state = load_state()
-	table.sort(state.downloaded)
-	while #state.downloaded > MAX_ARCHIVE do
-		local oldest = state.downloaded[1]
-		local path = get_archive_dir() .. "/" .. oldest .. ".json"
-		os.remove(path)
-		table.remove(state.downloaded, 1)
-	end
-	save_state(state)
-end
-
 local function parse_puzzle(resp)
 	local categories = resp.categories
 	local cards = {}
@@ -150,7 +136,6 @@ local function get_connections_puzzle()
 	end
 
 	save_puzzle(date, resp)
-	enforce_max_archive()
 
 	return parse_puzzle(resp), date
 end
@@ -207,13 +192,31 @@ local function bulk_download(num_puzzles)
 		day_offset = day_offset + 1
 	end
 
-	enforce_max_archive()
 	return downloaded_count, skipped_count
 end
 
 local function get_archive_info()
 	local state = load_state()
 	return #state.downloaded, #state.played
+end
+
+local function delete_all_archived()
+	local dir = get_archive_dir()
+	local state = load_state()
+	for _, date in ipairs(state.downloaded) do
+		os.remove(dir .. "/" .. date .. ".json")
+	end
+	state.downloaded = {}
+	save_state(state)
+end
+
+local function reset_history()
+	local dir = get_archive_dir()
+	local state = load_state()
+	for _, date in ipairs(state.downloaded) do
+		os.remove(dir .. "/" .. date .. ".json")
+	end
+	os.remove(get_state_path())
 end
 
 return {
@@ -223,4 +226,6 @@ return {
 	mark_played = mark_played,
 	bulk_download = bulk_download,
 	get_archive_info = get_archive_info,
+	delete_all_archived = delete_all_archived,
+	reset_history = reset_history,
 }

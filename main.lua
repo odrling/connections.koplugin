@@ -5,6 +5,7 @@ This plugin lets you play Connections in KOReader.
 --]]
 --
 
+local ConfirmBox = require("ui/widget/confirmbox")
 local ConnectionsWidget = require("connectionsview")
 local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
@@ -95,6 +96,28 @@ local function archive_info()
 	}))
 end
 
+local function delete_archived()
+	UIManager:show(ConfirmBox:new({
+		text = _("Delete all archived puzzles? Play history will be kept."),
+		ok_text = _("Delete"),
+		ok_callback = function()
+			api.delete_all_archived()
+			UIManager:show(InfoMessage:new({ text = _("Archived puzzles deleted.") }))
+		end,
+	}))
+end
+
+local function reset_history()
+	UIManager:show(ConfirmBox:new({
+		text = _("Reset all data? This deletes archived puzzles and play history."),
+		ok_text = _("Reset"),
+		ok_callback = function()
+			api.reset_history()
+			UIManager:show(InfoMessage:new({ text = _("All data reset.") }))
+		end,
+	}))
+end
+
 function NYTConnections:addToMainMenu(menu_items)
 	menu_items.nytconnections = {
 		text = _("NYT Connections"),
@@ -109,8 +132,21 @@ function NYTConnections:addToMainMenu(menu_items)
 				callback = download_puzzles,
 			},
 			{
-				text = _("Archive Info"),
-				callback = archive_info,
+				text = _("Settings"),
+				sub_item_table = {
+					{
+						text = _("Archive Info"),
+						callback = archive_info,
+					},
+					{
+						text = _("Delete Archived Puzzles"),
+						callback = delete_archived,
+					},
+					{
+						text = _("Reset History"),
+						callback = reset_history,
+					},
+				},
 			},
 		},
 	}
